@@ -12,6 +12,10 @@ function LandingPage() {
     const [Skip, setSkip] = useState(0);
     const [Limit, setLimit] = useState(8);
     const [PostSize, setPostSize] = useState(0);
+    const [Filters, setFilters] = useState({
+        continents: [],
+        price: []
+    });
 
     useEffect(() => {
         const variables = {
@@ -25,9 +29,12 @@ function LandingPage() {
         Axios.post('/api/product/getProducts', variables)
             .then(response => {
                 if(response.data.success) {
-                    setProducts(Products.concat(response.data.products));
+                    if(variables.lordMore) {
+                        setProducts(Products.concat(response.data.products));
+                    } else {
+                        setProducts(response.data.products);
+                    }
                     setPostSize(response.data.postSize);
-                    console.log(response.data.products);
                 } else {
                     alert('Failed to fetch product datas');
                 }
@@ -54,13 +61,33 @@ function LandingPage() {
 
         const variables = {
             skip: skip,
-            limit: Limit
+            limit: Limit,
+            lordMore: true
         }
         getProducts(variables);
         setSkip(skip);
     }
 
+    const showFilteredResults = (filters) => {
+        const variables = {
+            skip: 0,
+            limit: Limit,
+            filters: filters
+        }
+        getProducts(variables);
+        setSkip(0);
+    }
+
     const handleFilters = (filters, category) => {
+        const newFilters = {...Filters};
+        newFilters[category] = filters;
+
+        if(category === "price") {
+
+        }
+
+        showFilteredResults(newFilters);
+        setFilters(newFilters);
 
     }
 
