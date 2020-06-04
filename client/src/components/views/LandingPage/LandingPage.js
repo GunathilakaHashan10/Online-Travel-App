@@ -3,10 +3,11 @@ import Axios from 'axios';
 import { Icon, Row, Col, Card } from 'antd';
 import ImageSlider from '../../utils/ImageSlider';
 import CheckBox from './Sections/CheckBox';
+import RadioBox from './Sections/RadioBox';
 
 const {  Meta } = Card;
 
-function LandingPage() {
+function LandingPage(props) {
 
     const [Products, setProducts] = useState([]);
     const [Skip, setSkip] = useState(0);
@@ -31,6 +32,7 @@ function LandingPage() {
                 if(response.data.success) {
                     if(variables.lordMore) {
                         setProducts(Products.concat(response.data.products));
+                        
                     } else {
                         setProducts(response.data.products);
                     }
@@ -99,6 +101,10 @@ function LandingPage() {
 
             <CheckBox 
                 handleFilters={filters => handleFilters(filters, "continents")}
+            />
+
+            <RadioBox 
+                handleFilters={filters => handleFilters(filters, "price")}
             />
 
             {Products.length === 0 ?
