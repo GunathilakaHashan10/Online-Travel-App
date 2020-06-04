@@ -4,8 +4,9 @@ import { Icon, Row, Col, Card } from 'antd';
 import ImageSlider from '../../utils/ImageSlider';
 import CheckBox from './Sections/CheckBox';
 import RadioBox from './Sections/RadioBox';
+import { continents, price } from './Sections/Data';
 
-const {  Meta } = Card;
+const { Meta } = Card;
 
 function LandingPage(props) {
 
@@ -29,10 +30,10 @@ function LandingPage(props) {
     const getProducts = (variables) => {
         Axios.post('/api/product/getProducts', variables)
             .then(response => {
-                if(response.data.success) {
-                    if(variables.lordMore) {
+                if (response.data.success) {
+                    if (variables.lordMore) {
                         setProducts(Products.concat(response.data.products));
-                        
+
                     } else {
                         setProducts(response.data.products);
                     }
@@ -44,12 +45,12 @@ function LandingPage(props) {
     }
 
     const renderCards = Products.map((product, index) => {
-        return <Col lg={6} md={8} xs={24} >
+        return <Col lg={6} md={8} xs={24} key={index} >
             <Card
                 hoverable={true}
                 cover={<ImageSlider images={product.images} />}
             >
-                <Meta 
+                <Meta
                     title={product.title}
                     description={`$${product.price}`}
                 />
@@ -80,14 +81,28 @@ function LandingPage(props) {
         setSkip(0);
     }
 
+    const handlePrice = (value) => {
+        const data = price;
+        let array = [];
+
+        for(let key in data) {
+            if(data[key]._id === parseInt(value, 10)) {
+                array = data[key].array;
+            }
+        }
+        return array;
+    }
+    
+
     const handleFilters = (filters, category) => {
-        const newFilters = {...Filters};
+        const newFilters = { ...Filters };
         newFilters[category] = filters;
 
-        if(category === "price") {
-
+        if (category === "price") {
+            let priceValues = handlePrice(filters);
+            newFilters[category] = priceValues;
         }
-
+        console.log(newFilters)
         showFilteredResults(newFilters);
         setFilters(newFilters);
 
@@ -95,34 +110,41 @@ function LandingPage(props) {
 
     return (
         <div style={{ width: '75%', margin: '3rem auto' }}>
-            <div style={{ textAlign: 'center'}}>
+            <div style={{ textAlign: 'center' }}>
                 <h2>Let's Travel Anywhere <Icon type="rocket" /></h2>
             </div>
 
-            <CheckBox 
-                handleFilters={filters => handleFilters(filters, "continents")}
-            />
+            <Row gutter={[16, 16]}>
+                <Col lg={12} xs={24}>
+                    <CheckBox
+                        handleFilters={filters => handleFilters(filters, "continents")}
+                    />
+                </Col>
+                <Col lg={12} xs={24}>
+                    <RadioBox
+                        handleFilters={filters => handleFilters(filters, "price")}
+                    />
 
-            <RadioBox 
-                handleFilters={filters => handleFilters(filters, "price")}
-            />
+                </Col>
+            </Row>
+
 
             {Products.length === 0 ?
-                <div style={{ display: 'flex', height: '300px', justifyContent: 'center', alignItems: 'center'}}>
+                <div style={{ display: 'flex', height: '300px', justifyContent: 'center', alignItems: 'center' }}>
                     <h2>No post yet...</h2>
                 </div> :
                 <div>
-                    <Row gutter={[16,16]}>
+                    <Row gutter={[16, 16]}>
                         {renderCards}
                     </Row>
                 </div>
             }
             <br /><br />
 
-            {PostSize >= Limit && 
-            <div style={{ display: 'flex', justifyContent: 'center'}}>
-                <button onClick={onLoadMore}>Load More</button>
-            </div>
+            {PostSize >= Limit &&
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <button onClick={onLoadMore}>Load More</button>
+                </div>
             }
 
         </div>

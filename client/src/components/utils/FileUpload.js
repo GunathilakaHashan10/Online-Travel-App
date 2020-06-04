@@ -16,6 +16,7 @@ function FileUpload(props) {
         Axios.post('/api/product/uploadImage', formData, config)
             .then(response => {
                 if(response.data.success) {
+                    console.log(response.data);
                     setImages([...Images, response.data]);
                     props.refreshFunction([...Images, response.data]);
                 } else {
@@ -60,5 +61,6 @@ function FileUpload(props) {
         </div>
     )
 }
+
 
 export default FileUpload

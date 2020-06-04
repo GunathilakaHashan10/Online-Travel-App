@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const sharp = require('sharp');
 const { auth } = require("../middleware/auth");
 const { Product } = require('../models/Product');
 
@@ -14,7 +15,7 @@ let storage = multer.diskStorage({
     },
     fileFilter: (req, file, cb) => {
         const ext = path.extname(file.originalname);
-        if(ext !== '.jpg' || ext !== '.png') {
+        if (ext !== '.jpg' || ext !== '.png') {
             return cb(res.status(400).end('only jpg, png are allowed'), false);
         }
         cb(null, true);
@@ -28,20 +29,44 @@ let upload = multer({ storage: storage }).single("file");
 //=================================
 
 router.post("/uploadImage", auth, (req, res) => {
+    // upload(req, res, err => {
+    //     if(err) return res.json({ success: false, err });
+    //     return res.json({ success: true, image: res.req.file.path, fileName: res.req.file.filename });
+    // })
     upload(req, res, err => {
-        if(err) return res.json({ success: false, err });
-        return res.json({ success: true, image: res.req.file.path, fileName: res.req.file.filename });
+
+        if (err) {
+            return res.json({ success: false, err });
+        } else {
+            try {
+                let path = ""
+                sharp(req.file.path)
+                    .resize(200, 200)
+                    .toFile(path = "thumbanails/" + `thumbnails-${req.file.originalname}.webp`, (err, resizeImage) => {
+                        if (err) {
+                            console.log(err);
+                        } else {
+                            console.log(resizeImage);
+                        }
+                    })
+                    console.log(res.req.file.path)
+                    console.log(path)
+                    return res.json({ success: true, image: res.req.file.path, thumbanail: path , fileName: res.req.file.filename });
+            } catch (error) {
+                console.log(error);
+            }
+        }
     })
 
 });
 
 router.post("/uploadProduct", auth, (req, res) => {
-   const product = new Product(req.body);
-   
-   product.save((err) => {
-       if(err) return res.status(400).json({ success: false, err });
-       return res.status(200).json({ success: true });
-   })
+    const product = new Product(req.body);
+
+    product.save((err) => {
+        if (err) return res.status(400).json({ success: false, err });
+        return res.status(200).json({ success: true });
+    })
 });
 
 router.post("/getProducts", (req, res) => {
@@ -55,9 +80,9 @@ router.post("/getProducts", (req, res) => {
 
     console.log(req.body.filters);
 
-    for(let key in req.body.filters) {
-        if(req.body.filters[key].length > 0) {
-            if(key === "price") {
+    for (let key in req.body.filters) {
+        if (req.body.filters[key].length > 0) {
+            if (key === "price") {
 
             } else {
                 findArgs[key] = req.body.filters[key];
@@ -73,7 +98,7 @@ router.post("/getProducts", (req, res) => {
         .skip(skip)
         .limit(limit)
         .exec((err, products) => {
-            if(err) return res.status(400).json({ success: false, err });
+            if (err) return res.status(400).json({ success: false, err });
             res.status(200).json({ success: true, products, postSize: products.length });
         })
 });
