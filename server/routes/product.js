@@ -29,10 +29,6 @@ let upload = multer({ storage: storage }).single("file");
 //=================================
 
 router.post("/uploadImage", auth, (req, res) => {
-    // upload(req, res, err => {
-    //     if(err) return res.json({ success: false, err });
-    //     return res.json({ success: true, image: res.req.file.path, fileName: res.req.file.filename });
-    // })
     upload(req, res, err => {
 
         if (err) {
@@ -49,9 +45,9 @@ router.post("/uploadImage", auth, (req, res) => {
                             console.log(resizeImage);
                         }
                     })
-                    console.log(res.req.file.path)
-                    console.log(path)
-                    return res.json({ success: true, image: res.req.file.path, thumbanail: path , fileName: res.req.file.filename });
+                console.log(res.req.file.path)
+                console.log(path)
+                return res.json({ success: true, image: res.req.file.path, thumbanail: path, fileName: res.req.file.filename });
             } catch (error) {
                 console.log(error);
             }
@@ -77,12 +73,15 @@ router.post("/getProducts", (req, res) => {
     let skip = parseInt(req.body.skip);
 
     let findArgs = {};
-
-    console.log(req.body.filters);
+    let term = req.body.searchTerm;
 
     for (let key in req.body.filters) {
         if (req.body.filters[key].length > 0) {
             if (key === "price") {
+                findArgs[key] = {
+                    $gte: req.body.filters[key][0],
+                    $lte: req.body.filters[key][1]
+                }
 
             } else {
                 findArgs[key] = req.body.filters[key];
@@ -90,18 +89,49 @@ router.post("/getProducts", (req, res) => {
         }
     }
 
-    console.log(findArgs)
-
-    Product.find(findArgs)
-        .populate("writer")
-        .sort([[sortBy, order]])
-        .skip(skip)
-        .limit(limit)
-        .exec((err, products) => {
-            if (err) return res.status(400).json({ success: false, err });
-            res.status(200).json({ success: true, products, postSize: products.length });
-        })
+    if (term) {
+        Product.find(findArgs)
+            .find({ $text: { $search: term } })
+            .populate("writer")
+            .sort([[sortBy, order]])
+            .skip(skip)
+            .limit(limit)
+            .exec((err, products) => {
+                if (err) return res.status(400).json({ success: false, err });
+                res.status(200).json({ success: true, products, postSize: products.length });
+            })
+    } else {
+        Product.find(findArgs)
+            .populate("writer")
+            .sort([[sortBy, order]])
+            .skip(skip)
+            .limit(limit)
+            .exec((err, products) => {
+                if (err) return res.status(400).json({ success: false, err });
+                res.status(200).json({ success: true, products, postSize: products.length });
+            })
+    }
 });
+
+// /product_by_id?id=${productId}&type=single
+router.get('/product_by_id', (req, res) => {
+    let type = req.query.type;
+    let productsId = req.query.id;
+
+    if (type === "array") {
+        let ids = req.query.id.split(',');
+        productsId = [];
+        productsId = ids.map(item => item);
+    }
+
+    Product.find({ '_id': { $in: productsId } })
+        .populate('writer')
+        .exec((err, product) => {
+            if (err) return res.status(400).send(err);
+            return res.status(200).send(product);
+        })
+
+})
 
 
 module.exports = router;

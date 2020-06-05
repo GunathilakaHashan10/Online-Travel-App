@@ -24,7 +24,7 @@ function LoginPage(props) {
   return (
     <Formik
       initialValues={{
-        email: initialEmail,
+        email: initialEmail === "undefined" ? "" : initialEmail, 
         password: '',
       }}
       validationSchema={Yup.object().shape({
